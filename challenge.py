@@ -60,6 +60,7 @@ def J_strategy(t, x):
     Remember to obey the steering constraints from the assignment instructions.
     """
     # YOUR CODE HERE
+    return -J_cw_ante(t,x)
     raise NotImplementedError()
 
 def simulator(JL, JA):
