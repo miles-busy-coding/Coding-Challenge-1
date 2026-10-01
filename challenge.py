@@ -27,8 +27,8 @@ from q3 import collision_event as q3_collision_event, r_collision as q3_r_collis
 import utils
 
 
-TEAM = "" # Enter "lion" or "antelope". This is based on your student ID, see assignment PDF.
-TEAMNAME = "" # Enter a nickname for your team. The leaderboard will show this nickname, not your real name(s).
+TEAM = "antelope" # Enter "lion" or "antelope". This is based on your student ID, see assignment PDF.
+TEAMNAME = "Team67" # Enter a nickname for your team. The leaderboard will show this nickname, not your real name(s).
 max_step    = 0.0005
 Tmax        = 10
 x0          = [0, 0, np.pi / 6, 2.25, 0, 0]
