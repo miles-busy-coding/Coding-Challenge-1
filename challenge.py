@@ -35,7 +35,54 @@ x0          = [0, 0, np.pi / 6, 2.25, 0, 0]
 vL          = 2
 r_collision = 0.05
 
-JL_bench = J_cw_lion
+import math
+
+def J_lion(t, x):
+    x_L, y_L, theta_L, x_A, y_A, theta_A = x
+    
+    v_L = 2.0
+    v_A = 1.0 / (1.0 + t**2)
+    
+    dx = x_A - x_L
+    dy = y_A - y_L
+    dist_sq = dx**2 + dy**2
+    
+    # If we are practically on top of it, just aim directly to avoid division by tiny numbers
+    if dist_sq < 0.01:
+        target_angle = math.atan2(dy, dx)
+        angle_diff = (target_angle - theta_L + math.pi) % (2 * math.pi) - math.pi
+        return max(min(5.0 * angle_diff, 1.0), -1.0)
+    
+    # Calculate velocity vectors
+    vx_L = v_L * math.cos(theta_L)
+    vy_L = v_L * math.sin(theta_L)
+    vx_A = v_A * math.cos(theta_A)
+    vy_A = v_A * math.sin(theta_A)
+    
+    # Relative velocity
+    dvx = vx_A - vx_L
+    dvy = vy_A - vy_L
+    
+    # Calculate the Line of Sight (LOS) angle
+    los_angle = math.atan2(dy, dx)
+    
+    # Calculate the rate of change of the LOS angle (omega)
+    # Derived from the cross product of relative position and relative velocity
+    los_rate = (dx * dvy - dy * dvx) / dist_sq
+    
+    # Navigation Gain (N). Standard missile values are 3.0 to 5.0.
+    N = 4.0 
+    
+    # Aim at the target, but add a massive lead angle based on how fast the target is drifting
+    target_angle = los_angle + N * los_rate
+    
+    angle_diff = (target_angle - theta_L + math.pi) % (2 * math.pi) - math.pi
+    
+    J = 5.0 * angle_diff
+    
+    return max(min(J, 1.0), -1.0)
+
+JL_bench = J_lion
 JA_bench = J_cw_ante
 
 if TEAM not in ("lion", "antelope"):
@@ -51,6 +98,19 @@ def collision_event(t, x):
 
 collision_event.terminal = True
 
+# # we are so goated
+# def J_strategy(t, x):
+#     """Your strategy must be a valid steering rate, implement it here.
+
+#     As usual, the inputs are:
+#         x = [xL, yL, phiL, xA, yA, phiA], with angles in radians
+#         t = time,
+#     Remember to obey the steering constraints from the assignment instructions.
+#     """
+#     # YOUR CODE HERE
+#     return -J_cw_ante(t,x)
+#     raise NotImplementedError()
+
 def J_strategy(t, x):
     """Your strategy must be a valid steering rate, implement it here.
 
@@ -60,7 +120,38 @@ def J_strategy(t, x):
     Remember to obey the steering constraints from the assignment instructions.
     """
     # YOUR CODE HERE
-    return -J_cw_ante(t,x)
+    xL, yL, phiL, xA, yA, phiA = x
+    critical_d = 1.5
+    J_multiplier = 10
+    
+    dx = xL - xA
+    dy = yL - yA
+    d = np.hypot(xL, yL)
+    
+    lion_sight_angle = np.arctan2(dy, dx)
+    
+    wrap = ((lion_sight_angle - phiL + math.pi) % (2 * math.pi)) - math.pi
+    
+    if wrap >= 0:
+        juke_direction = 1
+    else:
+        juke_direction = -1
+        
+
+    target_angle = lion_sight_angle + juke_direction * (math.pi / 2)
+        
+    angle_diff_wrap = (target_angle - phiA + math.pi) % (2 * math.pi) - math.pi
+    
+    J = J_multiplier * angle_diff_wrap
+    
+    if (J > 2.0): 
+        result_J = 2.0
+    elif (J < -2.0): 
+        result_J = -2.0
+    else:
+        result_J = J
+    
+    return result_J
     raise NotImplementedError()
 
 def simulator(JL, JA):
