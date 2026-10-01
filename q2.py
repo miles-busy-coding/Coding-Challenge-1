@@ -48,7 +48,7 @@ def J_cw_ante(t,x):
     perpendicular to vector from lion to antelope."""
 
     theta = np.arctan2(x[4] - x[1], x[3] - x[0]) + np.pi/2
-    wrap = ((theta - x[2] + math.pi) % (2 * math.pi)) - math.pi
+    wrap = ((theta - x[5] + math.pi) % (2 * math.pi)) - math.pi
     if (-JAmax > wrap):
         clip = -JAmax
     elif (wrap <= JAmax):
